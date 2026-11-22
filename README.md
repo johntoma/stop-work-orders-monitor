@@ -29,7 +29,7 @@ docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=Str0ngLocalPass" -p 1433:143
 docker run -d --name mailpit -p 1025:1025 -p 8025:8025 axllent/mailpit
 ```
 
-Give SQL Server about 20 seconds to start. `docker ps` should show both containers as "Up".
+Give SQL Server about 30 seconds to start. `docker ps` should show both containers as "Up".
 
 **2. Create your settings file.** Copy `.env.example` to `.env`. The defaults work as they are. If you chose your own password in step 1, set `DB_PASSWORD` to match.
 
