@@ -55,13 +55,8 @@ CREATE TABLE dbo.stop_work_orders (
     issued_date            DATE           NULL,      -- the date on the order
     published_at           DATETIME2(0)   NOT NULL,  -- when the register published it
     revision_id            INT            NOT NULL,  -- changes when the register edits the order
-    register_status        VARCHAR(20)    NOT NULL   -- LISTED / REMOVED
-        CONSTRAINT DF_stop_work_orders_register_status DEFAULT 'LISTED',
-    first_seen_at          DATETIME2(0)   NOT NULL
-        CONSTRAINT DF_stop_work_orders_first_seen_at DEFAULT SYSUTCDATETIME(),
-    last_seen_at           DATETIME2(0)   NOT NULL
-        CONSTRAINT DF_stop_work_orders_last_seen_at DEFAULT SYSUTCDATETIME(),
-    raw_json               NVARCHAR(MAX)  NULL       -- the full API record, for reprocessing
+    first_seen_at          DATETIME2(0)   NOT NULL   -- when this tool first stored the order
+        CONSTRAINT DF_stop_work_orders_first_seen_at DEFAULT SYSUTCDATETIME()
 );
 GO
 
