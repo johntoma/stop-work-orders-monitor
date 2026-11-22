@@ -14,20 +14,14 @@ The flow, top to bottom:
 """
 
 import argparse
-from typing import Literal
 
 from swo_monitor import config, send_email
 from swo_monitor.db import get_connection
 from swo_monitor.fetch import fetch_data_from_api
 from swo_monitor.matching import MatchResults, match_orders_to_companies
-from swo_monitor.models import Company, ParsedOrder
+from swo_monitor.models import STATUS_PENDING, STATUS_SEEDED, Company, ParsedOrder
 from swo_monitor.parse import parse_orders
-from swo_monitor.store import (
-    load_known_companies,
-    load_pending_companies,
-    mark_company_notified,
-    save_results,
-)
+from swo_monitor.store import load_known_companies, mark_company_notified, save_results
 
 
 def run() -> None:
@@ -60,9 +54,7 @@ def run() -> None:
 
         # 5. Save: new companies start as SEEDED on the first run (no email),
         #    and as PENDING on later runs (email still to send).
-        new_company_status: Literal["PENDING", "SEEDED"] = (
-            "SEEDED" if is_first_run else "PENDING"
-        )
+        new_company_status: str = STATUS_SEEDED if is_first_run else STATUS_PENDING
         orders_added = save_results(connection, orders, results, new_company_status)
         # Commit makes the changes permanent. Until this line, a failure undoes all of them.
         connection.commit()
@@ -73,7 +65,11 @@ def run() -> None:
 
         # 6. Notify: send first, then mark as sent. If the run stops between the two,
         #    the worst case is a repeated email next time, never a missed one.
-        pending_companies: list[Company] = load_pending_companies(connection)
+        #    PENDING companies are read from the database, not just from this run,
+        #    so an email that failed on an earlier run is retried.
+        pending_companies: list[Company] = load_known_companies(
+            connection, notification_status=STATUS_PENDING
+        )
         print(
             f"6. Companies to email about: {len(pending_companies)} "
             f"(mail server: {config.SMTP_HOST}:{config.SMTP_PORT})"

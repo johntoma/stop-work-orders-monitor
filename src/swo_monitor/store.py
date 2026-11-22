@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 import pyodbc
 
 from swo_monitor.matching import MatchResults
-from swo_monitor.models import Company, ParsedOrder
+from swo_monitor.models import STATUS_SENT, Company, ParsedOrder
 
 
 def from_db_time(value: datetime) -> datetime:
@@ -21,12 +21,22 @@ def to_db_time(value: datetime) -> datetime:
     return value.astimezone(UTC).replace(tzinfo=None)
 
 
-def load_known_companies(connection: pyodbc.Connection) -> list[Company]:
-    """Return every company stored in the database. An empty list on the first run."""
-    rows = connection.execute(
-        "SELECT company_id, name, normalised_name, acn, date_added "
-        "FROM dbo.companies ORDER BY company_id"
-    )
+def load_known_companies(
+    connection: pyodbc.Connection, notification_status: str | None = None
+) -> list[Company]:
+    """Return the companies stored in the database. An empty list on the first run.
+
+    notification_status: if given, return only the companies with that status,
+        e.g. "PENDING" for the ones still waiting for an email.
+    """
+    sql = "SELECT company_id, name, normalised_name, acn, date_added FROM dbo.companies"
+    parameters = []
+    if notification_status is not None:
+        sql += " WHERE notification_status = ?"
+        parameters.append(notification_status)
+    sql += " ORDER BY company_id"
+
+    rows = connection.execute(sql, parameters)
     # pyodbc lets us read each column by name, e.g. row.name.
     return [
         Company(
@@ -114,35 +124,12 @@ def save_results(
     return orders_added
 
 
-def load_pending_companies(connection: pyodbc.Connection) -> list[Company]:
-    """Return the companies that still need an email (notification_status = PENDING).
-
-    Reading them from the database, not just from this run, means an email that
-    failed on an earlier run is retried.
-    """
-    rows = connection.execute(
-        "SELECT company_id, name, normalised_name, acn, date_added "
-        "FROM dbo.companies WHERE notification_status = ? ORDER BY company_id",
-        "PENDING",
-    )
-    return [
-        Company(
-            company_id=row.company_id,
-            name=row.name,
-            normalised_name=row.normalised_name,
-            acn=row.acn,
-            date_added=from_db_time(row.date_added),
-        )
-        for row in rows
-    ]
-
-
 def mark_company_notified(connection: pyodbc.Connection, company: Company) -> None:
     """Record that the email for this company was sent. Does not commit."""
     connection.execute(
         "UPDATE dbo.companies "
         "SET notification_status = ?, notified_at = SYSUTCDATETIME() "
         "WHERE company_id = ?",
-        "SENT",
+        STATUS_SENT,
         company.company_id,
     )

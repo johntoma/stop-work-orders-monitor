@@ -16,7 +16,7 @@ USER_AGENT = "stop-work-orders-monitor/0.1"
 STOP_WORK_ORDERS_CATEGORY = "Stop work orders"
 
 
-def fetch_data_from_api(page_size=PAGE_SIZE):
+def fetch_data_from_api(page_size: int = PAGE_SIZE) -> list[dict]:
     """Fetch every Stop Work Order from the API and return them as a list.
 
     The API returns results in pages, meaning we may need to make multiple requests to
@@ -50,8 +50,6 @@ def fetch_data_from_api(page_size=PAGE_SIZE):
     orders = []
 
     while True:
-        print("fetching a page...")
-
         # "size" and "from" are the same idea as take/skip or limit/offset.
         # Skip the orders we already have, so this request returns the next page.
         payload["from"] = len(orders)
@@ -78,7 +76,7 @@ def fetch_data_from_api(page_size=PAGE_SIZE):
     return orders
 
 
-def check_orders(orders, total):
+def check_orders(orders: list[dict], total: int) -> None:
     """Make sure the API returned what we asked for. Raises ValueError if not.
 
     A "200 OK" status is not proof of correct data. While testing, a request with an

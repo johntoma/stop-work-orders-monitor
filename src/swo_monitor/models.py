@@ -1,5 +1,13 @@
+"""The data shapes used across the project, and the notification status values."""
+
 from dataclasses import dataclass
 from datetime import date, datetime
+
+# Values for the notification_status column of the companies table.
+# They are named here once, so a typo cannot silently break the notifications.
+STATUS_SEEDED = "SEEDED"  # already on the register at the first run, so no email
+STATUS_PENDING = "PENDING"  # new company, email not sent yet
+STATUS_SENT = "SENT"  # email sent
 
 
 @dataclass
@@ -10,9 +18,8 @@ class ParsedOrder:
     title: str
     order_type: str  # ORIGINAL / MODIFIED / CONDITION_NOTICE / OTHER
     company_name: str  # as written in the title
-    normalised_name: (
-        str  # simplified form, used to match the same company across orders
-    )
+    # Simplified form of the name, used to match the same company across orders.
+    normalised_name: str
     acn: str | None  # 9 digits, or None if the order does not show one
     address: str | None
     url: str
