@@ -1,0 +1,23 @@
+[project]
+name = "swo-monitor"
+version = "0.1.0"
+description = "Monitors the NSW Building Commission's Stop Work Orders register, stores it in SQL Server, and emails when a new company appears."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pyodbc>=5.5.0",
+    "python-dotenv>=1.2.4",
+    "requests>=2.34.2",
+    "tzdata>=2026.6",
+]
+
+# Commands that "uv run" makes available. Each one points at a function: file:function.
+[project.scripts]
+swo-monitor = "swo_monitor.main:cli"
+swo-setup-db = "swo_monitor.setup_db:main"
+
+# Tells uv how to install the code in src/swo_monitor as a package,
+# so the files can import each other and the commands above work.
+[build-system]
+requires = ["uv_build>=0.9.5,<0.10.0"]
+build-backend = "uv_build"
